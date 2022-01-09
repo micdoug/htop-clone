@@ -10,8 +10,8 @@
 
 namespace parser_helper {
 std::unordered_map<std::string, std::string> ExtractKeyValuePairsFromFile(
-    const std::string_view file_path, const std::string_view separator) {
-  std::ifstream input_file{std::string{file_path}};
+    const std::string& file_path, const std::string& separator) {
+  std::ifstream input_file{file_path};
   if (!input_file) {
     throw OpenFileError{file_path};
   }

@@ -3,12 +3,11 @@
 #include <unistd.h>
 
 #include <cctype>
+#include <experimental/optional>
 #include <fstream>
 #include <iostream>
-#include <optional>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <tuple>
 #include <vector>
 
@@ -25,6 +24,11 @@ using std::chrono::seconds;
 using std::chrono::system_clock;
 
 namespace {
+
+struct UserInfo {
+  int uid{};
+  std::string name{};
+};
 
 // Return the start time of the process.
 //
@@ -87,8 +91,8 @@ std::string FetchCommandLine(const int pid) {
 
 // On Linux systems we can find the user that is running a process in the file
 // "/proc/<pid>/status" as the Uid property.
-std::tuple<int, std::string> FetchProcessOwnerUidAndName(
-    const int pid, UidResolver* uid_resolver) {
+const UserInfo FetchProcessOwnerUidAndName(const int pid,
+                                           UidResolver* uid_resolver) {
   const char* kStatusFilePathMask{"/proc/{}/status"};
   std::string file_path{std::format(kStatusFilePathMask, pid)};
 
@@ -98,20 +102,20 @@ std::tuple<int, std::string> FetchProcessOwnerUidAndName(
     // we discover its pid and we try to get information about it. In this case
     // the process will be removed in the next iteration, so we just return a
     // dummy value here.
-    return {0, "-"};
+    return UserInfo{0, "-"};
   }
   std::string line{};
   while (std::getline(status_file, line)) {
-    if (std::string_view{line}.substr(0, 4) == "Uid:") {
+    if (line.substr(0, 4) == "Uid:") {
       std::istringstream line_parser{line.substr(5)};
       int uid{};
       line_parser >> uid;
 
-      return {uid, uid_resolver->FetchUserName(uid).value_or(
-                       std::format("UID({})", uid))};
+      return UserInfo{uid, uid_resolver->FetchUserName(uid).value_or(
+                               std::format("UID({})", uid))};
     }
   }
-  return {0, "-"};
+  return UserInfo{0, "-"};
 }
 
 }  // namespace
@@ -123,9 +127,9 @@ Process::Process(const int pid, const system_clock::time_point boot_time,
       process_start_time_{CalculateProcessStartTime(pid, boot_time)},
       command_line_{FetchCommandLine(pid)},
       last_cpu_utilization_check_(CalculateProcessStartTime(pid, boot_time)) {
-  const auto& [uid, username] = FetchProcessOwnerUidAndName(pid, uid_resolver);
-  uid_ = uid;
-  username_ = username;
+  const UserInfo user_info = FetchProcessOwnerUidAndName(pid, uid_resolver);
+  uid_ = user_info.uid;
+  username_ = user_info.name;
 }
 
 int Process::Pid() const { return pid_; }
@@ -215,7 +219,7 @@ string Process::Ram() {
   }
   std::string line{};
   while (std::getline(status_file, line)) {
-    if (std::string_view{line}.substr(0, 6) == "VmSize") {
+    if (line.substr(0, 6) == "VmSize") {
       long memory_usage_in_kB = std::stol(line.substr(7));
       return std::format("{} MB", memory_usage_in_kB /
                                       1024);  // convert to megabytes and return

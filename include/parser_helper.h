@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <string_view>
 #include <unordered_map>
 
 namespace parser_helper {
@@ -16,7 +15,7 @@ namespace parser_helper {
 //  - file_path: The path to the file we will read the pair values from.
 //  - separator: The string that is used to delimit key and values in the file.
 std::unordered_map<std::string, std::string> ExtractKeyValuePairsFromFile(
-    const std::string_view file_path, const std::string_view separator);
+    const std::string& file_path, const std::string& separator);
 
 // Remove string delimiters from the provided string.
 //

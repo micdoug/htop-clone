@@ -35,7 +35,8 @@ std::unordered_map<int, std::string> BuildUidsToUserNameMap() {
 
 UidResolver::UidResolver() : uid_to_names_{BuildUidsToUserNameMap()} {}
 
-std::optional<std::string> UidResolver::FetchUserName(const int uid) {
+std::experimental::optional<std::string> UidResolver::FetchUserName(
+    const int uid) {
   // If the target uid is not in the cache, we rebuild the cache.
   if (uid_to_names_.find(uid) == uid_to_names_.end()) {
     uid_to_names_ = BuildUidsToUserNameMap();
@@ -44,7 +45,7 @@ std::optional<std::string> UidResolver::FetchUserName(const int uid) {
   // If even after rebuilding the cache the uid is not found, we consider that
   // it doesn't exists in the system anymore.
   if (uid_to_names_.find(uid) == uid_to_names_.end()) {
-    return std::nullopt;
+    return std::experimental::nullopt;
   }
   return uid_to_names_[uid];
 }

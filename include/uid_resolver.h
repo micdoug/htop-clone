@@ -1,6 +1,6 @@
 #pragma once
 
-#include <optional>
+#include <experimental/optional>
 #include <string>
 #include <unordered_map>
 
@@ -18,7 +18,7 @@ class UidResolver {
   //
   // Parameters:
   //  - uid: The id of the target user.
-  std::optional<std::string> FetchUserName(const int uid);
+  std::experimental::optional<std::string> FetchUserName(const int uid);
 
  private:
   // Stores a cache of uid -> names map.
