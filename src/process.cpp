@@ -208,7 +208,10 @@ string Process::Command() const { return command_line_; }
 
 string Process::Ram() {
   // In Linux systems the amount of memory used by a process is available in the
-  // file "/proc/<pid>/status" as the VmSize property.
+  // file "/proc/<pid>/status" as the VmRSS property. We could also use VmSize,
+  // however it accounts for the virtual memory allocated by the process, which
+  // can be higher than the actual phisical available memory, which can be
+  // confusing.
   const char* kStatusFilePathMask{"/proc/{}/status"};
   std::ifstream status_file{std::format(kStatusFilePathMask, Pid())};
   if (!status_file) {
@@ -219,7 +222,7 @@ string Process::Ram() {
   }
   std::string line{};
   while (std::getline(status_file, line)) {
-    if (line.substr(0, 6) == "VmSize") {
+    if (line.substr(0, 5) == "VmRSS") {
       long memory_usage_in_kB = std::stol(line.substr(7));
       return std::format("{} MB", memory_usage_in_kB /
                                       1024);  // convert to megabytes and return
